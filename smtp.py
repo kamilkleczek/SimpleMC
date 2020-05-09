@@ -10,6 +10,7 @@ class Commands(enumerate):
     RCPTO = 'RCPT TO:'
     DATA = 'DATA'
     QUIT = 'QUIT'
+    HELO = 'EHLO localhost'
 
 
 class Responses(enumerate):
@@ -49,21 +50,31 @@ class SMTP():
 
     def send_email(self, email):
         try:
+            send_list = []
+            if email.send_to:
+                send_list.append(email.send_to)
+            if email.send_cc:
+                send_list.append(email.send_cc)
+            if email.send_bcc:
+                send_list.append(email.send_bcc)
+
             mail_from = '<{}>'.format(email.send_from)
             response = self._msg_send(Commands.MAILFROM, mail_from)
             self._fetch_response_ok(Responses.MAILFROM, response)
 
-            mail_to = '<{}>'.format(email.send_to)
-            response = self._msg_send(Commands.RCPTO, mail_to)
-            self._fetch_response_ok(Responses.RCPTO, response)
+            for mail in send_list:
+                mail_to = '<{}>'.format(mail)
+                response = self._msg_send(Commands.RCPTO, mail_to)
+                self._fetch_response_ok(Responses.RCPTO, response)
 
             response = self._msg_send(Commands.DATA)
             self._fetch_response_ok(Responses.DATA, response)
 
             email_body = 'From:<{0}>\n' \
                          'To:<{1}>\n' \
-                         'Subject:{2}\n' \
-                         '{3}'.format(email.send_from, email.send_to, email.subject, email.body)
+                         'CC:<{2}>\n' \
+                         'Subject:{3}\n' \
+                         '{4}'.format(email.send_from, email.send_to, email.send_cc, email.subject, email.body)
             response = self._msg_send(email_body, recv=False)
 
             response = self._msg_send('\r\n.\r\n')
@@ -82,7 +93,7 @@ class SMTP():
         if self.debug:
             print('Server: {}'.format(recv))
 
-        self._msg_send('EHLO localhost', isbase64=False)
+        self._msg_send(Commands.HELO, isbase64=False)
 
     def _fetch_response_ok(self, ok_response, response):
         pattern = re.compile(r'{0}'.format(ok_response))

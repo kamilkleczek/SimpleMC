@@ -5,14 +5,17 @@ class Email:
     def __init__(self):
         self.send_from = ""
         self.send_to = ""
-        self.cc = ""
+        self.send_cc = ""
+        self.send_bcc = ""
         self.subject = ""
         self.date = ""
         self.body = ""
 
-    def create(self, send_from, send_to, subject, body):
+    def create(self, send_from, send_to, send_cc, send_bcc, subject, body):
         self.send_from = send_from
         self.send_to = send_to
+        self.send_cc = send_cc
+        self.send_bcc = send_bcc
         self.subject = subject
         self.body = body
         return self
